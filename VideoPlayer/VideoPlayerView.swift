@@ -9,52 +9,64 @@ struct VideoPlayerView: View {
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
-        VStack {
-            Button(action: {
-                self.isShowingImagePicker.toggle()
-            }) {
-                Text("映像を選択")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Color.blue)
-                    .cornerRadius(10)
-            }
-            .padding(.top, 50)
-            .sheet(isPresented: $isShowingImagePicker) {
-                ImagePicker(isPresented: self.$isShowingImagePicker, selectedVideoURL: self.$selectedVideoURL)
-                    .edgesIgnoringSafeArea(.all)
-                    .onDisappear {
-                        if let url = self.selectedVideoURL {
-                            self.playVideo(url: url)
-                        }
-                    }
-            }
+        ZStack {
+            // 背景色を設定
+            colorScheme == .dark ? Color.black : Color.white
             
-            if let player = self.player {
-                if isPlaying {
-                    VideoPlayer(player: player)
-                        .onAppear {
-                            player.play()
-                            NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player.currentItem, queue: .main) { _ in
-                                player.seek(to: .zero)
-                                player.play()
+            VStack {
+                Text("意識の向け方")
+                    .font(.system(size: 30))
+                    .foregroundColor(.gray)
+                    .padding(.top, 5)
+
+                Button(action: {
+                    self.isShowingImagePicker.toggle()
+                }) {
+                    Text("映像を選択")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(5)
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                .padding(.top, 10)
+                .sheet(isPresented: $isShowingImagePicker) {
+                    ImagePicker(isPresented: self.$isShowingImagePicker, selectedVideoURL: self.$selectedVideoURL)
+                        .edgesIgnoringSafeArea(.all)
+                        .onDisappear {
+                            if let url = self.selectedVideoURL {
+                                self.playVideo(url: url)
                             }
                         }
-                } else {
-                    Color.black
-                        .onAppear {
-                            player.pause()
-                        }
                 }
-            } else {
-                Text("テキスト")
-                    .font(.system(size: 18))
-                    .foregroundColor(.gray)
-                    .padding(.top, 20)
+                
+                if let player = self.player {
+                    if isPlaying {
+                        VideoPlayer(player: player)
+                            .onAppear {
+                                player.play()
+                                NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player.currentItem, queue: .main) { _ in
+                                    player.seek(to: .zero)
+                                    player.play()
+                                }
+                            }
+                    } else {
+                        Color.black
+                            .onAppear {
+                                player.pause()
+                            }
+                    }
+                } else {
+                    Text("このアプリでは事前に記録された写真ライブラリ内の画像を使い遠い存在に体を向けて意識したいときや、記録された記憶に深く向き合う時の助けになります。\n 自身のフォルダから存在や記録した映像を選びその方角をあらかじめ設定しておくと、いつでもその事象に自然と体を向けて意識し、思い出すことができます。")
+                        .font(.system(size: 13))
+                        .foregroundColor(.gray)
+                        .padding(.top, 25)
+                        .padding(.leading, 10)
+                        .padding(.trailing, 10)
+                }
             }
+            .padding()
         }
-        .background(colorScheme == .dark ? Color.black : Color.white)
         .edgesIgnoringSafeArea(.all)
         .onDisappear {
             NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
